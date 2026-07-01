@@ -2,6 +2,8 @@ import Link from 'next/link'
 
 const NAV_ITEMS = [
   { label: 'Overview', href: '/overview' },
+  { label: 'Services', href: '/services' },
+  { label: 'Availability', href: '/availability' },
   { label: 'Business', href: '/business' },
   { label: 'Settings', href: '/settings' },
 ]
@@ -13,7 +15,6 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
       <aside className="w-64 border-r border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-6 py-5">
           <span className="text-lg font-bold text-gray-900">Schedulr</span>
@@ -33,8 +34,6 @@ export default function DashboardLayout({
           </ul>
         </nav>
       </aside>
-
-      {/* Main content */}
       <div className="flex flex-1 flex-col">
         <header className="border-b border-gray-200 bg-white px-8 py-4">
           <div className="flex items-center justify-between">

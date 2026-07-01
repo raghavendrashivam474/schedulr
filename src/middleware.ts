@@ -3,16 +3,14 @@ import { verifySessionToken } from './features/auth/services/session.service'
 
 const COOKIE_NAME = 'schedulr_session'
 const AUTH_ROUTES = ['/login', '/register']
-const PROTECTED_PREFIXES = ['/overview', '/business', '/settings']
+const PROTECTED_PREFIXES = ['/overview', '/business', '/settings', '/services', '/availability']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get(COOKIE_NAME)?.value
 
   const isAuthRoute = AUTH_ROUTES.includes(pathname)
-  const isProtectedRoute = PROTECTED_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
-  )
+  const isProtectedRoute = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
   let isAuthenticated = false
   if (token) {

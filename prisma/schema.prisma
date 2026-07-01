@@ -7,11 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─────────────────────────────────────────────
 // User
-// Represents an authenticated platform user
-// ─────────────────────────────────────────────
-
 model User {
   id           String       @id @default(cuid())
   email        String       @unique
@@ -20,9 +16,7 @@ model User {
   status       UserStatus   @default(ACTIVE)
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
-
   memberships  Membership[]
-
   @@map("users")
 }
 
@@ -32,25 +26,26 @@ enum UserStatus {
   SUSPENDED
 }
 
-// ─────────────────────────────────────────────
 // Business
-// Represents a business operating on the platform
-// ─────────────────────────────────────────────
-
 model Business {
-  id           String       @id @default(cuid())
-  name         String
-  type         String
-  timeZone     String       @map("time_zone")
-  contactEmail String       @map("contact_email")
-  contactPhone String?      @map("contact_phone")
-  address      String?
-  status       BusinessStatus @default(ACTIVE)
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
-
-  memberships  Membership[]
-
+  id                   String               @id @default(cuid())
+  name                 String
+  type                 String
+  timeZone             String               @map("time_zone")
+  contactEmail         String               @map("contact_email")
+  contactPhone         String?              @map("contact_phone")
+  address              String?
+  bookingWindowDays    Int                  @default(30) @map("booking_window_days")
+  advanceBookingHours  Int                  @default(24) @map("advance_booking_hours")
+  cancellationHours    Int                  @default(24) @map("cancellation_hours")
+  defaultDuration      Int                  @default(60) @map("default_duration")
+  status               BusinessStatus       @default(ACTIVE)
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+  memberships          Membership[]
+  services             Service[]
+  weeklySchedules      WeeklySchedule[]
+  holidays             Holiday[]
   @@map("businesses")
 }
 
@@ -60,11 +55,7 @@ enum BusinessStatus {
   SUSPENDED
 }
 
-// ─────────────────────────────────────────────
 // Membership
-// Connects a User to a Business with a role
-// ─────────────────────────────────────────────
-
 model Membership {
   id         String           @id @default(cuid())
   userId     String           @map("user_id")
@@ -73,10 +64,8 @@ model Membership {
   status     MembershipStatus @default(ACTIVE)
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
-
   user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   business   Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
   @@unique([userId, businessId])
   @@map("memberships")
 }
@@ -94,19 +83,74 @@ enum MembershipStatus {
   INVITED
 }
 
-// ─────────────────────────────────────────────
 // Session
-// Manages authenticated user sessions
-// ─────────────────────────────────────────────
-
 model Session {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
   token     String   @unique
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
-
   @@index([token])
   @@index([userId])
   @@map("sessions")
+}
+
+// Service
+model Service {
+  id          String        @id @default(cuid())
+  businessId  String        @map("business_id")
+  name        String
+  description String?
+  duration    Int
+  status      ServiceStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  @@map("services")
+}
+
+enum ServiceStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+// WeeklySchedule
+model WeeklySchedule {
+  id          String    @id @default(cuid())
+  businessId  String    @map("business_id")
+  dayOfWeek   Int       @map("day_of_week")
+  isOpen      Boolean   @default(true) @map("is_open")
+  openTime    String    @map("open_time")
+  closeTime   String    @map("close_time")
+  breaks      Break[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  @@unique([businessId, dayOfWeek])
+  @@map("weekly_schedules")
+}
+
+// Break
+model Break {
+  id               String         @id @default(cuid())
+  weeklyScheduleId String         @map("weekly_schedule_id")
+  startTime        String         @map("start_time")
+  endTime          String         @map("end_time")
+  label            String?
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  weeklySchedule   WeeklySchedule @relation(fields: [weeklyScheduleId], references: [id], onDelete: Cascade)
+  @@map("breaks")
+}
+
+// Holiday
+model Holiday {
+  id         String   @id @default(cuid())
+  businessId String   @map("business_id")
+  date       DateTime
+  label      String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  @@map("holidays")
 }
