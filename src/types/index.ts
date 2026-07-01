@@ -10,10 +10,6 @@ export interface User {
   updatedAt: Date
 }
 
-export interface UserWithPassword extends User {
-  passwordHash: string
-}
-
 // Business Types
 export type BusinessStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
@@ -106,6 +102,37 @@ export interface Holiday {
   label: string
   createdAt: Date
   updatedAt: Date
+}
+
+// Booking Types
+export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
+
+export interface Booking {
+  id: string
+  businessId: string
+  serviceId: string
+  customerName: string
+  customerEmail: string
+  customerPhone?: string | null
+  appointmentDate: Date
+  startTime: string
+  endTime: string
+  status: BookingStatus
+  notes?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface BookingWithDetails extends Booking {
+  service: Service
+  business: Business
+}
+
+// Slot Types
+export interface TimeSlot {
+  startTime: string
+  endTime: string
+  available: boolean
 }
 
 // API Response Types

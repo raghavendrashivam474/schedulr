@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 const NAV_ITEMS = [
   { label: 'Overview', href: '/overview' },
+  { label: 'Bookings', href: '/bookings' },
   { label: 'Services', href: '/services' },
   { label: 'Availability', href: '/availability' },
   { label: 'Business', href: '/business' },
@@ -23,10 +24,8 @@ export default function DashboardLayout({
           <ul className="space-y-1">
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                >
+                <Link href={item.href}
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900">
                   {item.label}
                 </Link>
               </li>
@@ -50,12 +49,7 @@ export default function DashboardLayout({
 function LogoutButton() {
   return (
     <form action="/api/auth/logout" method="POST">
-      <button
-        type="submit"
-        className="text-sm font-medium text-gray-600 hover:text-gray-900"
-      >
-        Sign out
-      </button>
+      <button type="submit" className="text-sm font-medium text-gray-600 hover:text-gray-900">Sign out</button>
     </form>
   )
 }
