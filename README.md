@@ -1,37 +1,63 @@
 # Schedulr
 
-> **Schedulr helps service-based businesses manage appointments through a simple, reliable online booking platform—reducing administrative work while making it easier for customers to schedule services.**
+> **Schedulr helps service-based businesses manage services, availability, and appointments through an intelligent scheduling platform that simplifies booking for both businesses and customers.**
 
 ---
 
-## The Problem
+## Project Status
 
-Many small and growing service businesses still manage appointments through phone calls, WhatsApp chats, paper diaries, spreadsheets, or social media messages. As bookings increase, these fragmented methods become difficult to manage, leading to scheduling conflicts, missed appointments, excessive back-and-forth communication, and poor customer experience.
+🚧 **Active Development**
 
-Appointment management should be organized, transparent, and effortless—not another daily administrative burden.
+**Current Version:** v0.3.1
 
----
+**Current Milestone:** Sprint 3 Complete
 
-## What Schedulr Does
-
-Schedulr provides a centralized appointment management platform designed for businesses where **time is the primary resource**.
-
-With Schedulr, businesses can:
-
-* Manage business availability from a single place.
-* Offer customers real-time appointment booking.
-* Automatically generate available booking slots.
-* Handle cancellations and rescheduling with minimal effort.
-* Reduce manual scheduling and reminder management.
-* Maintain an organized history of appointments and customers.
-* Support multiple staff members under a single business.
-* Grow from individual professionals to multi-staff businesses without changing workflows.
+**Next Milestone:** Sprint 4 – Notifications & Customer Management
 
 ---
 
-## Who Is It For?
+# The Problem
 
-Schedulr is designed for appointment-based service businesses, including:
+Many service-based businesses still manage appointments using phone calls, WhatsApp chats, paper diaries, spreadsheets, or social media messages.
+
+As the number of customers grows, these disconnected workflows often result in:
+
+* Double bookings
+* Missed appointments
+* Scheduling conflicts
+* Manual follow-ups
+* Poor customer experience
+* Administrative overhead
+
+Scheduling should help businesses operate efficiently—not consume valuable time.
+
+---
+
+# What Schedulr Does
+
+Schedulr centralizes appointment management into a single platform designed for businesses where **time is the primary resource**.
+
+Current capabilities include:
+
+* Secure business onboarding
+* Business profile management
+* Service management
+* Weekly schedule configuration
+* Holiday management
+* Business availability management
+* Dynamic appointment slot generation
+* Intelligent booking validation
+* Public appointment booking
+* Booking dashboard
+* Appointment lifecycle management
+
+The platform is designed to grow from a single professional to a multi-staff scheduling solution without architectural redesign.
+
+---
+
+# Who Is It For?
+
+Schedulr is built for appointment-based businesses, including:
 
 * Doctors and Clinics
 * Tutors and Coaching Centers
@@ -41,28 +67,53 @@ Schedulr is designed for appointment-based service businesses, including:
 * Freelancers
 * Legal Professionals
 * Wellness Practitioners
-* Repair & Maintenance Services
+* Repair Services
 * Photography Studios
 
-If your business depends on scheduled appointments, Schedulr is built for you.
+If your business relies on appointments, Schedulr is designed to support your workflow.
 
 ---
 
-## See It In Action
+# Current Platform Capabilities
 
-🚧 Screenshots coming soon.
+### Identity
 
-Future updates will include:
+* User authentication
+* Session management
+* Protected dashboard
+* Business ownership
 
-* Booking page
-* Business dashboard
-* Calendar view
-* Appointment workflow
-* Mobile experience
+### Business Operations
 
-**Live Demo**
+* Service management
+* Weekly schedules
+* Holiday management
+* Business settings
+* Availability configuration
 
-Coming soon.
+### Scheduling Intelligence
+
+* Dynamic slot generation
+* Availability engine
+* Booking validation
+* Public booking experience
+* Booking management dashboard
+
+---
+
+# See It In Action
+
+Current implementation includes:
+
+* Business onboarding
+* Service management
+* Availability configuration
+* Public booking page
+* Dynamic slot generation
+* Booking dashboard
+* Appointment management
+
+🚧 Screenshots and a live demo will be added in a future release.
 
 ---
 
@@ -80,7 +131,7 @@ Coming soon.
 ## Installation
 
 ```bash
-git clone https://github.com/your-username/schedulr.git
+git clone https://github.com/raghavendrashivam474/schedulr.git
 
 cd schedulr
 
@@ -93,7 +144,7 @@ Create a local environment file.
 cp .env.example .env
 ```
 
-Update the required environment variables.
+Configure the required environment variables.
 
 Run database migrations.
 
@@ -117,93 +168,122 @@ http://localhost:3000
 
 # Engineering Overview
 
-Although Schedulr focuses on solving scheduling problems, it is built using a production-oriented architecture designed for long-term scalability.
+Schedulr is built using a modular, production-oriented architecture focused on maintainability, scalability, and clean separation of responsibilities.
 
 ## Technology Stack
 
-| Layer      | Technology              | Why                                                           |
-| ---------- | ----------------------- | ------------------------------------------------------------- |
-| Framework  | Next.js 14 (App Router) | Modern full-stack framework with server rendering and routing |
-| Language   | TypeScript              | Strong type safety and maintainability                        |
-| Styling    | Tailwind CSS            | Rapid, consistent UI development                              |
-| Database   | PostgreSQL              | Reliable relational data for scheduling workflows             |
-| ORM        | Prisma                  | Type-safe database access and schema management               |
-| Validation | Zod                     | Runtime validation for reliable APIs                          |
-| Formatting | Prettier                | Consistent code formatting                                    |
-| Linting    | ESLint                  | Maintainable and standardized code quality                    |
+| Layer      | Technology           | Purpose                          |
+| ---------- | -------------------- | -------------------------------- |
+| Framework  | Next.js (App Router) | Full-stack application framework |
+| Language   | TypeScript           | Type safety and maintainability  |
+| Styling    | Tailwind CSS         | Consistent UI development        |
+| Database   | PostgreSQL           | Relational data storage          |
+| ORM        | Prisma               | Type-safe database access        |
+| Validation | Zod                  | Runtime request validation       |
+| Formatting | Prettier             | Consistent formatting            |
+| Linting    | ESLint               | Code quality                     |
 
 ---
 
-## Project Structure
+## Architecture Principles
+
+Schedulr follows several core engineering principles.
+
+### Availability-First Architecture
+
+Business availability acts as the source of truth for all scheduling decisions.
+
+### Dynamic Slot Generation
+
+Appointment slots are generated dynamically on every request and are **never stored**, ensuring accuracy while avoiding synchronization problems.
+
+### Double Booking Validation
+
+Every booking request is validated twice:
+
+* During slot generation
+* Immediately before booking creation
+
+This prevents race conditions and overlapping appointments.
+
+### Domain-Driven Structure
+
+Business capabilities remain isolated into independent modules, including:
+
+* Authentication
+* Business
+* Services
+* Availability
+* Booking
+
+This keeps the platform maintainable as new capabilities are introduced.
+
+### Event-Oriented Growth
+
+Future capabilities such as notifications, analytics, reminders, and customer history will react to booking events instead of tightly coupling business logic.
+
+---
+
+# Project Structure
 
 ```text
 schedulr/
-│
-├── src/
-│   ├── app/
-│   ├── components/
-│   ├── features/
-│   ├── hooks/
-│   ├── services/
-│   ├── config/
-│   ├── middleware/
-│   ├── types/
-│   └── utils/
-│
-├── lib/
-├── prisma/
-├── docs/
-├── tests/
-└── public/
+
+src/
+├── app/
+├── components/
+├── features/
+├── hooks/
+├── middleware/
+├── services/
+├── types/
+├── utils/
+
+lib/
+prisma/
+docs/
+tests/
+public/
 ```
 
-The project follows a **domain-driven structure**, where business capabilities are organized into independent modules rather than grouped solely by technical concerns.
-
 ---
 
-## Key Design Decisions
-
-* **Availability-first architecture** — Business availability is treated as the source of truth, from which bookable slots are generated.
-* **Modular domain structure** — Business capabilities such as Booking, Availability, Services, and Customers remain independent and maintainable.
-* **Event-driven workflow** — Notifications, analytics, and future integrations react to booking events instead of being tightly coupled.
-* **Scalable by design** — The architecture is prepared for future support of multiple businesses, staff members, and locations.
-
----
-
-# Product Roadmap
+# Development Progress
 
 ## Completed
 
-* [x] Project foundation
-* [x] Repository initialization
-* [x] Development environment setup
-* [x] PostgreSQL integration
-* [x] Prisma ORM configuration
-* [x] Documentation and project structure
+* ✅ Project foundation
+* ✅ Authentication & session management
+* ✅ Business onboarding
+* ✅ Service management
+* ✅ Weekly schedule configuration
+* ✅ Holiday management
+* ✅ Availability engine
+* ✅ Dynamic slot generation
+* ✅ Booking validation
+* ✅ Public booking page
+* ✅ Booking dashboard
+* ✅ Appointment management
 
 ---
 
 ## Planned
 
-* [ ] Business onboarding
-* [ ] Authentication & authorization
-* [ ] Availability management
-* [ ] Service management
-* [ ] Appointment booking
-* [ ] Calendar interface
-* [ ] Customer self-service portal
-* [ ] Email reminders
-* [ ] Multi-staff scheduling
-* [ ] Analytics dashboard
-* [ ] Mobile-first experience
+* Email confirmations
+* Customer management
+* Appointment reminders
+* Analytics dashboard
+* Multi-staff scheduling
+* Calendar synchronization
+* Public business profiles
+* Payment integration
+* Mobile-first experience
 
 ---
 
 # Contributing
 
 Contributions are welcome.
-
-If you'd like to contribute:
 
 1. Fork the repository.
 2. Create a feature branch.
@@ -218,7 +298,7 @@ git checkout -b feature/your-feature
 git commit -m "feat: add your feature"
 ```
 
-4. Push the branch.
+4. Push your branch.
 
 ```bash
 git push origin feature/your-feature
@@ -226,7 +306,7 @@ git push origin feature/your-feature
 
 5. Open a Pull Request.
 
-Please follow the existing project structure, coding standards, and documentation guidelines.
+Please follow the existing project architecture, coding standards, and documentation conventions.
 
 ---
 
@@ -236,21 +316,17 @@ Please follow the existing project structure, coding standards, and documentatio
 
 Computer Science Engineering Student
 
-Building thoughtful software products that solve real-world problems through clean architecture, scalable systems, and user-centered design.
+Passionate about designing scalable software systems through clean architecture, thoughtful engineering, and user-centered product development.
+
+GitHub:
+https://github.com/raghavendrashivam474
 
 ---
 
-## License & Usage
+# License
 
 This project is licensed under the **MIT License**.
 
-You are free to:
-
-* Use the software for personal and commercial purposes.
-* Modify and extend the source code.
-* Distribute original or modified versions.
-* Incorporate the project into your own work.
-
-The only requirement is that the original copyright and license notice remain included in all copies or substantial portions of the software.
+You are free to use, modify, and distribute this software in accordance with the terms of the MIT License.
 
 See the **LICENSE** file for the complete license text.
