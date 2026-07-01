@@ -7,14 +7,106 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Placeholder models - Sprint 1 will expand these
+// ─────────────────────────────────────────────
+// User
+// Represents an authenticated platform user
+// ─────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String       @map("password_hash")
+  status       UserStatus   @default(ACTIVE)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  memberships  Membership[]
 
   @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// ─────────────────────────────────────────────
+// Business
+// Represents a business operating on the platform
+// ─────────────────────────────────────────────
+
+model Business {
+  id           String       @id @default(cuid())
+  name         String
+  type         String
+  timeZone     String       @map("time_zone")
+  contactEmail String       @map("contact_email")
+  contactPhone String?      @map("contact_phone")
+  address      String?
+  status       BusinessStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  memberships  Membership[]
+
+  @@map("businesses")
+}
+
+enum BusinessStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// ─────────────────────────────────────────────
+// Membership
+// Connects a User to a Business with a role
+// ─────────────────────────────────────────────
+
+model Membership {
+  id         String           @id @default(cuid())
+  userId     String           @map("user_id")
+  businessId String           @map("business_id")
+  role       MembershipRole   @default(OWNER)
+  status     MembershipStatus @default(ACTIVE)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business   Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+  @@map("memberships")
+}
+
+enum MembershipRole {
+  OWNER
+  MANAGER
+  STAFF
+  RECEPTIONIST
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+  INVITED
+}
+
+// ─────────────────────────────────────────────
+// Session
+// Manages authenticated user sessions
+// ─────────────────────────────────────────────
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([token])
+  @@index([userId])
+  @@map("sessions")
 }
