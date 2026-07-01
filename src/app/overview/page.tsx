@@ -92,7 +92,7 @@ export default function OverviewPage() {
                     <p className="text-sm font-medium text-gray-800">{b.customerName}</p>
                     <p className="text-xs text-gray-400">{b.service.name}</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-700">{b.startTime} â€” {b.endTime}</p>
+                  <p className="text-sm font-medium text-gray-700">{b.startTime} Ã¢â‚¬â€ {b.endTime}</p>
                 </div>
               ))}
             </div>

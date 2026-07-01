@@ -127,7 +127,7 @@ export default function PublicBookingPage() {
           <div>
             <button onClick={() => setStep('service')} className="mb-4 text-sm text-blue-600 hover:underline">Back</button>
             <h2 className="mb-1 text-lg font-semibold text-gray-900">Select a Date</h2>
-            <p className="mb-4 text-sm text-gray-500">{selectedService?.name} — {selectedService?.duration} min</p>
+            <p className="mb-4 text-sm text-gray-500">{selectedService?.name} â€” {selectedService?.duration} min</p>
             <input type="date" min={today} max={maxDateStr}
               value={selectedDate}
               onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlot(null) }}
@@ -214,7 +214,7 @@ export default function PublicBookingPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Time</span>
-                  <span className="font-medium">{selectedSlot?.startTime} — {selectedSlot?.endTime}</span>
+                  <span className="font-medium">{selectedSlot?.startTime} â€” {selectedSlot?.endTime}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Business</span>
