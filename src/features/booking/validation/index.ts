@@ -16,7 +16,7 @@ export const createBookingSchema = z.object({
 })
 
 export const updateBookingSchema = z.object({
-  status: z.enum(['CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW']),
+  status: z.enum(['CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']),
 })
 
 export const getSlotsSchema = z.object({

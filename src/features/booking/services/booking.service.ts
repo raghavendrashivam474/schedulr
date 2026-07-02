@@ -1,29 +1,24 @@
 import { prisma } from '@lib/prisma'
 import { checkBusinessAvailability, timeToMinutes, minutesToTime } from '../engine/availability.engine'
 import { generateSlots } from '../engine/slot.generator'
+import { findOrCreateCustomer, updateCustomerStats } from '@features/customers/services/customer.service'
+import { sendEmail } from '@features/notifications/services/email.service'
+import { bookingConfirmationTemplate, bookingCancellationTemplate } from '@features/notifications/templates/email.templates'
 import type { CreateBookingInput, UpdateBookingInput, GetSlotsInput } from '../validation'
 import type { Booking, BookingWithDetails, TimeSlot } from '@appTypes/index'
 
 export async function getAvailableSlots(input: GetSlotsInput): Promise<TimeSlot[]> {
   const { businessId, serviceId, date } = input
-
   const requestDate = new Date(date + 'T00:00:00')
-
   const availability = await checkBusinessAvailability(businessId, requestDate)
-  if (!availability.isAvailable || !availability.window) {
-    return []
-  }
+  if (!availability.isAvailable || !availability.window) return []
 
   const service = await prisma.service.findFirst({
     where: { id: serviceId, businessId, status: 'ACTIVE' },
   })
-
   if (!service) return []
 
-  const business = await prisma.business.findUnique({
-    where: { id: businessId },
-  })
-
+  const business = await prisma.business.findUnique({ where: { id: businessId } })
   if (!business) return []
 
   const dateStart = new Date(date + 'T00:00:00')
@@ -33,16 +28,14 @@ export async function getAvailableSlots(input: GetSlotsInput): Promise<TimeSlot[
     where: {
       businessId,
       appointmentDate: { gte: dateStart, lte: dateEnd },
-      status: { in: ['CONFIRMED'] },
+      status: { in: ['CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS'] },
     },
     select: { startTime: true, endTime: true },
   })
 
   const now = new Date()
   const isToday = requestDate.toDateString() === now.toDateString()
-  const currentTimeMinutes = isToday
-    ? now.getHours() * 60 + now.getMinutes()
-    : 0
+  const currentTimeMinutes = isToday ? now.getHours() * 60 + now.getMinutes() : 0
 
   return generateSlots({
     openTime: availability.window.openTime,
@@ -56,9 +49,7 @@ export async function getAvailableSlots(input: GetSlotsInput): Promise<TimeSlot[
   })
 }
 
-export async function createBooking(
-  input: CreateBookingInput
-): Promise<BookingWithDetails> {
+export async function createBooking(input: CreateBookingInput): Promise<BookingWithDetails> {
   const { businessId, serviceId, appointmentDate, startTime } = input
 
   const availability = await checkBusinessAvailability(businessId, new Date(appointmentDate + 'T00:00:00'))
@@ -69,19 +60,13 @@ export async function createBooking(
   const service = await prisma.service.findFirst({
     where: { id: serviceId, businessId, status: 'ACTIVE' },
   })
-
-  if (!service) {
-    throw new Error('Service not found or not active')
-  }
+  if (!service) throw new Error('Service not found or not active')
 
   const startMinutes = timeToMinutes(startTime)
   const endMinutes = startMinutes + service.duration
   const endTime = minutesToTime(endMinutes)
 
-  const business = await prisma.business.findUnique({
-    where: { id: businessId },
-  })
-
+  const business = await prisma.business.findUnique({ where: { id: businessId } })
   if (!business) throw new Error('Business not found')
 
   const advanceMinutes = business.advanceBookingHours * 60
@@ -114,7 +99,7 @@ export async function createBooking(
     where: {
       businessId,
       appointmentDate: { gte: dateStart, lte: dateEnd },
-      status: 'CONFIRMED',
+      status: { in: ['CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS'] },
       OR: [
         { startTime: { lte: startTime }, endTime: { gt: startTime } },
         { startTime: { lt: endTime }, endTime: { gte: endTime } },
@@ -122,15 +107,19 @@ export async function createBooking(
       ],
     },
   })
+  if (conflict) throw new Error('This time slot is no longer available')
 
-  if (conflict) {
-    throw new Error('This time slot is no longer available')
-  }
+  const customer = await findOrCreateCustomer(businessId, {
+    name: input.customerName,
+    email: input.customerEmail,
+    phone: input.customerPhone,
+  })
 
   const booking = await prisma.booking.create({
     data: {
       businessId,
       serviceId,
+      customerId: customer.id,
       customerName: input.customerName,
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
@@ -140,8 +129,34 @@ export async function createBooking(
       notes: input.notes,
       status: 'CONFIRMED',
     },
-    include: { service: true, business: true },
+    include: { service: true, business: true, customer: true },
   })
+
+  await prisma.appointmentTimeline.create({
+    data: {
+      bookingId: booking.id,
+      customerId: customer.id,
+      status: 'CONFIRMED',
+      note: 'Booking created',
+    },
+  })
+
+  const dateFormatted = new Date(appointmentDate + 'T00:00:00').toLocaleDateString('en-GB', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  })
+
+  const emailTemplate = bookingConfirmationTemplate({
+    customerName: input.customerName,
+    businessName: business.name,
+    serviceName: service.name,
+    appointmentDate: dateFormatted,
+    startTime,
+    endTime,
+    businessEmail: business.contactEmail,
+    businessPhone: business.contactPhone,
+  })
+
+  void sendEmail({ to: input.customerEmail, ...emailTemplate })
 
   return booking
 }
@@ -156,9 +171,7 @@ export async function getBookings(
   if (!membership) return []
 
   const where: Record<string, unknown> = { businessId: membership.businessId }
-
   if (filters?.status) where.status = filters.status
-
   if (filters?.date) {
     const dateStart = new Date(filters.date + 'T00:00:00')
     const dateEnd = new Date(filters.date + 'T23:59:59')
@@ -167,7 +180,7 @@ export async function getBookings(
 
   return prisma.booking.findMany({
     where,
-    include: { service: true, business: true },
+    include: { service: true, business: true, customer: true },
     orderBy: [{ appointmentDate: 'asc' }, { startTime: 'asc' }],
   })
 }
@@ -183,7 +196,7 @@ export async function getBookingById(
 
   return prisma.booking.findFirst({
     where: { id: bookingId, businessId: membership.businessId },
-    include: { service: true, business: true },
+    include: { service: true, business: true, customer: true },
   })
 }
 
@@ -201,15 +214,27 @@ export async function updateBookingStatus(
     where: { id: bookingId, businessId: membership.businessId },
   })
   if (!booking) throw new Error('Booking not found')
+  if (booking.status === 'CANCELLED') throw new Error('Cannot update a cancelled booking')
 
-  if (booking.status === 'CANCELLED') {
-    throw new Error('Cannot update a cancelled booking')
-  }
-
-  return prisma.booking.update({
+  const updated = await prisma.booking.update({
     where: { id: bookingId },
     data: { status: input.status },
   })
+
+  await prisma.appointmentTimeline.create({
+    data: {
+      bookingId,
+      customerId: booking.customerId,
+      status: input.status,
+      performedBy: userId,
+    },
+  })
+
+  if (input.status === 'COMPLETED' && booking.customerId) {
+    await updateCustomerStats(booking.customerId, booking.appointmentDate)
+  }
+
+  return updated
 }
 
 export async function cancelBooking(
@@ -223,27 +248,47 @@ export async function cancelBooking(
 
   const booking = await prisma.booking.findFirst({
     where: { id: bookingId, businessId: membership.businessId },
+    include: { service: true, business: true },
   })
   if (!booking) throw new Error('Booking not found')
+  if (booking.status === 'CANCELLED') throw new Error('Booking is already cancelled')
 
-  if (booking.status === 'CANCELLED') {
-    throw new Error('Booking is already cancelled')
-  }
-
-  const business = await prisma.business.findUnique({
-    where: { id: membership.businessId },
-  })
-
+  const business = await prisma.business.findUnique({ where: { id: membership.businessId } })
   if (business) {
     const cancellationDeadline = new Date(booking.appointmentDate)
     cancellationDeadline.setHours(cancellationDeadline.getHours() - business.cancellationHours)
     if (new Date() > cancellationDeadline) {
-      throw new Error('Cancellation window has passed. Cannot cancel within ' + business.cancellationHours + ' hours of appointment')
+      throw new Error('Cancellation window has passed')
     }
   }
 
-  return prisma.booking.update({
+  const updated = await prisma.booking.update({
     where: { id: bookingId },
     data: { status: 'CANCELLED' },
   })
+
+  await prisma.appointmentTimeline.create({
+    data: {
+      bookingId,
+      customerId: booking.customerId,
+      status: 'CANCELLED',
+      performedBy: userId,
+    },
+  })
+
+  if ('service' in booking && 'business' in booking) {
+    const dateFormatted = new Date(booking.appointmentDate).toLocaleDateString('en-GB', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    })
+    const emailTemplate = bookingCancellationTemplate({
+      customerName: booking.customerName,
+      businessName: booking.business.name,
+      serviceName: booking.service.name,
+      appointmentDate: dateFormatted,
+      startTime: booking.startTime,
+    })
+    void sendEmail({ to: booking.customerEmail, ...emailTemplate })
+  }
+
+  return updated
 }

@@ -3,7 +3,7 @@ import { verifySessionToken } from './features/auth/services/session.service'
 
 const COOKIE_NAME = 'schedulr_session'
 const AUTH_ROUTES = ['/login', '/register']
-const PROTECTED_PREFIXES = ['/overview', '/business', '/settings', '/services', '/availability', '/bookings']
+const PROTECTED_PREFIXES = ['/overview', '/business', '/settings', '/services', '/availability', '/bookings', '/customers']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl

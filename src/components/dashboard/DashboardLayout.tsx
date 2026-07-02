@@ -3,6 +3,7 @@ import Link from 'next/link'
 const NAV_ITEMS = [
   { label: 'Overview', href: '/overview' },
   { label: 'Bookings', href: '/bookings' },
+  { label: 'Customers', href: '/customers' },
   { label: 'Services', href: '/services' },
   { label: 'Availability', href: '/availability' },
   { label: 'Business', href: '/business' },

@@ -104,13 +104,33 @@ export interface Holiday {
   updatedAt: Date
 }
 
+// Customer Types
+export interface Customer {
+  id: string
+  businessId: string
+  name: string
+  email: string
+  phone?: string | null
+  notes?: string | null
+  firstVisit?: Date | null
+  lastVisit?: Date | null
+  totalVisits: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface CustomerWithHistory extends Customer {
+  bookings: BookingWithDetails[]
+}
+
 // Booking Types
-export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'
+export type BookingStatus = 'CONFIRMED' | 'CHECKED_IN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW'
 
 export interface Booking {
   id: string
   businessId: string
   serviceId: string
+  customerId?: string | null
   customerName: string
   customerEmail: string
   customerPhone?: string | null
@@ -126,6 +146,18 @@ export interface Booking {
 export interface BookingWithDetails extends Booking {
   service: Service
   business: Business
+  customer?: Customer | null
+}
+
+// Timeline Types
+export interface AppointmentTimeline {
+  id: string
+  bookingId: string
+  customerId?: string | null
+  status: BookingStatus
+  note?: string | null
+  performedBy?: string | null
+  createdAt: Date
 }
 
 // Slot Types
