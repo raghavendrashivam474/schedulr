@@ -55,7 +55,7 @@ export default function OverviewPage() {
           {business && (
             <div className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-500">
               Booking link:
-              <Link href={'/book/' + business.id} target="_blank" className="ml-1 text-blue-600 hover:underline">
+              <Link href={business.slug ? '/' + business.slug : '/book/' + business.id} target="_blank" className="ml-1 text-blue-600 hover:underline">
                 /book/{business.id.slice(0, 8)}...
               </Link>
             </div>
@@ -92,7 +92,7 @@ export default function OverviewPage() {
                     <p className="text-sm font-medium text-gray-800">{b.customerName}</p>
                     <p className="text-xs text-gray-400">{b.service.name}</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-700">{b.startTime} Ã¢â‚¬â€ {b.endTime}</p>
+                  <p className="text-sm font-medium text-gray-700">{b.startTime} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â {b.endTime}</p>
                 </div>
               ))}
             </div>

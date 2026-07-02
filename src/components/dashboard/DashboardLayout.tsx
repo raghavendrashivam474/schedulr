@@ -8,6 +8,8 @@ const NAV_ITEMS = [
   { label: 'Availability', href: '/availability' },
   { label: 'Business', href: '/business' },
   { label: 'Settings', href: '/settings' },
+  { label: 'Profile', href: '/settings/profile' },
+  { label: 'Share', href: '/settings/share' },
 ]
 
 export default function DashboardLayout({

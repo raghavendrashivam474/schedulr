@@ -16,7 +16,14 @@ export type BusinessStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 export interface Business {
   id: string
   name: string
+  slug?: string | null
   type: string
+  description?: string | null
+  logoUrl?: string | null
+  coverImageUrl?: string | null
+  website?: string | null
+  instagram?: string | null
+  facebook?: string | null
   timeZone: string
   contactEmail: string
   contactPhone?: string | null
@@ -165,6 +172,24 @@ export interface TimeSlot {
   startTime: string
   endTime: string
   available: boolean
+}
+
+// Public Profile Types
+export interface PublicBusiness {
+  id: string
+  name: string
+  slug?: string | null
+  type: string
+  description?: string | null
+  logoUrl?: string | null
+  coverImageUrl?: string | null
+  website?: string | null
+  instagram?: string | null
+  facebook?: string | null
+  contactEmail: string
+  contactPhone?: string | null
+  address?: string | null
+  bookingWindowDays: number
 }
 
 // API Response Types

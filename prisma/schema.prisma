@@ -28,7 +28,14 @@ enum UserStatus {
 model Business {
   id                  String         @id @default(cuid())
   name                String
+  slug                String?        @unique
   type                String
+  description         String?
+  logoUrl             String?        @map("logo_url")
+  coverImageUrl       String?        @map("cover_image_url")
+  website             String?
+  instagram           String?
+  facebook            String?
   timeZone            String         @map("time_zone")
   contactEmail        String         @map("contact_email")
   contactPhone        String?        @map("contact_phone")
@@ -46,6 +53,7 @@ model Business {
   holidays            Holiday[]
   bookings            Booking[]
   customers           Customer[]
+  @@index([slug])
   @@map("businesses")
 }
 
@@ -204,14 +212,14 @@ enum BookingStatus {
 }
 
 model AppointmentTimeline {
-  id            String        @id @default(cuid())
-  bookingId     String        @map("booking_id")
-  customerId    String?       @map("customer_id")
-  status        BookingStatus
-  note          String?
-  performedBy   String?       @map("performed_by")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  customer      Customer?     @relation(fields: [customerId], references: [id])
+  id          String        @id @default(cuid())
+  bookingId   String        @map("booking_id")
+  customerId  String?       @map("customer_id")
+  status      BookingStatus
+  note        String?
+  performedBy String?       @map("performed_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer    Customer?     @relation(fields: [customerId], references: [id])
   @@map("appointment_timeline")
 }
