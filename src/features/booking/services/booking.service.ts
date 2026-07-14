@@ -294,7 +294,7 @@ export async function cancelBooking(
     void sendEmail({ to: booking.customerEmail, ...emailTemplate })
   }
 
-  void cancelPendingRemindersForBooking(bookingId)
+  await cancelPendingRemindersForBooking(bookingId)
 
 
 
