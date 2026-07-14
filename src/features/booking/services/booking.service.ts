@@ -4,6 +4,7 @@ import { generateSlots } from '../engine/slot.generator'
 import { findOrCreateCustomer, updateCustomerStats } from '@features/customers/services/customer.service'
 import { sendEmail } from '@features/notifications/services/email.service'
 import { bookingConfirmationTemplate, bookingCancellationTemplate } from '@features/notifications/templates/email.templates'
+import { syncRemindersForBooking, cancelPendingRemindersForBooking } from '@features/reminders/services/reminder-sync.service'
 import type { CreateBookingInput, UpdateBookingInput, GetSlotsInput } from '../validation'
 import type { Booking, BookingWithDetails, TimeSlot } from '@appTypes/index'
 
@@ -157,6 +158,9 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
   })
 
   void sendEmail({ to: input.customerEmail, ...emailTemplate })
+  void syncRemindersForBooking(booking.id)
+
+
 
   return booking
 }
@@ -289,6 +293,10 @@ export async function cancelBooking(
     })
     void sendEmail({ to: booking.customerEmail, ...emailTemplate })
   }
+
+  void cancelPendingRemindersForBooking(bookingId)
+
+
 
   return updated
 }
