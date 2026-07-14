@@ -26,27 +26,30 @@ enum UserStatus {
 }
 
 model Business {
-  id                  String         @id @default(cuid())
+  id                  String           @id @default(cuid())
   name                String
-  slug                String?        @unique
+  slug                String?          @unique
   type                String
   description         String?
-  logoUrl             String?        @map("logo_url")
-  coverImageUrl       String?        @map("cover_image_url")
+  logoUrl             String?          @map("logo_url")
+  coverImageUrl       String?          @map("cover_image_url")
   website             String?
   instagram           String?
   facebook            String?
-  timeZone            String         @map("time_zone")
-  contactEmail        String         @map("contact_email")
-  contactPhone        String?        @map("contact_phone")
+  timeZone            String           @map("time_zone")
+  contactEmail        String           @map("contact_email")
+  contactPhone        String?          @map("contact_phone")
   address             String?
-  bookingWindowDays   Int            @default(30) @map("booking_window_days")
-  advanceBookingHours Int            @default(24) @map("advance_booking_hours")
-  cancellationHours   Int            @default(24) @map("cancellation_hours")
-  defaultDuration     Int            @default(60) @map("default_duration")
-  status              BusinessStatus @default(ACTIVE)
-  createdAt           DateTime       @default(now()) @map("created_at")
-  updatedAt           DateTime       @updatedAt @map("updated_at")
+  bookingWindowDays   Int              @default(30) @map("booking_window_days")
+  advanceBookingHours Int              @default(24) @map("advance_booking_hours")
+  cancellationHours   Int              @default(24) @map("cancellation_hours")
+  defaultDuration     Int              @default(60) @map("default_duration")
+  reminder24h         Boolean          @default(true) @map("reminder_24h")
+  reminder2h          Boolean          @default(true) @map("reminder_2h")
+  reminder30m         Boolean          @default(false) @map("reminder_30m")
+  status              BusinessStatus   @default(ACTIVE)
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
   memberships         Membership[]
   services            Service[]
   weeklySchedules     WeeklySchedule[]
@@ -197,6 +200,7 @@ model Booking {
   service         Service       @relation(fields: [serviceId], references: [id])
   customer        Customer?     @relation(fields: [customerId], references: [id])
   timeline        AppointmentTimeline[]
+  reminders       Reminder[]
   @@index([businessId, appointmentDate])
   @@index([customerEmail])
   @@map("bookings")
@@ -222,4 +226,33 @@ model AppointmentTimeline {
   booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   customer    Customer?     @relation(fields: [customerId], references: [id])
   @@map("appointment_timeline")
+}
+
+model Reminder {
+  id            String              @id @default(cuid())
+  bookingId     String              @map("booking_id")
+  channel       NotificationChannel @default(EMAIL)
+  intervalKey   String              @map("interval_key")
+  scheduledFor  DateTime            @map("scheduled_for")
+  status        ReminderStatus      @default(PENDING)
+  sentAt        DateTime?           @map("sent_at")
+  failureReason String?             @map("failure_reason")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  booking       Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  @@index([status, scheduledFor])
+  @@index([bookingId])
+  @@map("reminders")
+}
+
+enum ReminderStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum NotificationChannel {
+  EMAIL
 }
