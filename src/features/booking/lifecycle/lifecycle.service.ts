@@ -1,4 +1,5 @@
 import { prisma } from '@lib/prisma'
+import { cancelPendingRemindersForBooking } from '@features/reminders/services/reminder-sync.service'
 import type { BookingStatus } from '@appTypes/index'
 
 type TransitionMap = Partial<Record<BookingStatus, BookingStatus[]>>
@@ -56,6 +57,11 @@ export async function transitionBookingStatus(
       performedBy: userId,
     },
   })
+
+  // Sync reminders when appointment leaves an active state
+  if (newStatus === 'CANCELLED' || newStatus === 'NO_SHOW' || newStatus === 'COMPLETED') {
+    await cancelPendingRemindersForBooking(bookingId)
+  }
 
   return { id: updated.id, status: updated.status as BookingStatus }
 }
