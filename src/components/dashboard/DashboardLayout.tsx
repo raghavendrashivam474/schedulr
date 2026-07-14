@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { label: 'Availability', href: '/availability' },
   { label: 'Business', href: '/business' },
   { label: 'Settings', href: '/settings' },
+  { label: 'Reminders', href: '/settings/reminders' },
   { label: 'Profile', href: '/settings/profile' },
   { label: 'Share', href: '/settings/share' },
 ]
