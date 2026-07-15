@@ -1,6 +1,7 @@
 import { prisma } from '@lib/prisma'
 import { timeToMinutes, minutesToTime } from '@features/booking/engine/availability.engine'
 import { validateReschedule } from './reschedule-validator.service'
+import { resyncRemindersForBooking } from '@features/reminders/services/reminder-sync.service'
 import type { RescheduleValidationResult } from '../types'
 import type { Booking } from '@appTypes/index'
 
@@ -9,6 +10,7 @@ export interface RescheduleResult {
   booking?: Booking
   validation?: RescheduleValidationResult
   error?: string
+  reminderResyncFailed?: boolean
 }
 
 export async function rescheduleAppointment(input: {
@@ -53,8 +55,9 @@ export async function rescheduleAppointment(input: {
   const newEndTime = minutesToTime(newEndMin)
   const newAppointmentDateObj = new Date(input.newAppointmentDate + 'T00:00:00')
 
+  let updated
   try {
-    const updated = await prisma.$transaction(async (tx) => {
+    updated = await prisma.$transaction(async (tx) => {
       const updatedBooking = await tx.booking.update({
         where: { id: input.bookingId },
         data: {
@@ -81,10 +84,29 @@ export async function rescheduleAppointment(input: {
 
       return updatedBooking
     })
-
-    return { success: true, booking: updated as unknown as Booking }
   } catch (error) {
     console.error('[RESCHEDULE_TRANSACTION_FAILED]', error)
     return { success: false, error: 'Failed to reschedule appointment' }
+  }
+
+  // Reminder resynchronization occurs after the appointment transaction commits.
+  // Rationale: appointment update and change history are one business event;
+  // reminder future work is derived state that we reconcile immediately after,
+  // but a reminder failure must not roll back the appointment change.
+  let reminderResyncFailed = false
+  try {
+    await resyncRemindersForBooking(input.bookingId)
+  } catch (error) {
+    console.error('[RESCHEDULE_REMINDER_RESYNC_FAILED]', {
+      bookingId: input.bookingId,
+      error: error instanceof Error ? error.message : 'unknown',
+    })
+    reminderResyncFailed = true
+  }
+
+  return {
+    success: true,
+    booking: updated as unknown as Booking,
+    ...(reminderResyncFailed && { reminderResyncFailed: true }),
   }
 }
