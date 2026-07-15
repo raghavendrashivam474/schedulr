@@ -182,25 +182,26 @@ model Customer {
 }
 
 model Booking {
-  id              String        @id @default(cuid())
-  businessId      String        @map("business_id")
-  serviceId       String        @map("service_id")
-  customerId      String?       @map("customer_id")
-  customerName    String        @map("customer_name")
-  customerEmail   String        @map("customer_email")
-  customerPhone   String?       @map("customer_phone")
-  appointmentDate DateTime      @map("appointment_date")
-  startTime       String        @map("start_time")
-  endTime         String        @map("end_time")
-  status          BookingStatus @default(CONFIRMED)
+  id              String              @id @default(cuid())
+  businessId      String              @map("business_id")
+  serviceId       String              @map("service_id")
+  customerId      String?             @map("customer_id")
+  customerName    String              @map("customer_name")
+  customerEmail   String              @map("customer_email")
+  customerPhone   String?             @map("customer_phone")
+  appointmentDate DateTime            @map("appointment_date")
+  startTime       String              @map("start_time")
+  endTime         String              @map("end_time")
+  status          BookingStatus       @default(CONFIRMED)
   notes           String?
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-  business        Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  service         Service       @relation(fields: [serviceId], references: [id])
-  customer        Customer?     @relation(fields: [customerId], references: [id])
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  business        Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  service         Service             @relation(fields: [serviceId], references: [id])
+  customer        Customer?           @relation(fields: [customerId], references: [id])
   timeline        AppointmentTimeline[]
   reminders       Reminder[]
+  changes         AppointmentChange[]
   @@index([businessId, appointmentDate])
   @@index([customerEmail])
   @@map("bookings")
@@ -228,6 +229,28 @@ model AppointmentTimeline {
   @@map("appointment_timeline")
 }
 
+model AppointmentChange {
+  id               String                @id @default(cuid())
+  bookingId        String                @map("booking_id")
+  type             AppointmentChangeType
+  oldAppointmentDate DateTime            @map("old_appointment_date")
+  oldStartTime     String                @map("old_start_time")
+  oldEndTime       String                @map("old_end_time")
+  newAppointmentDate DateTime            @map("new_appointment_date")
+  newStartTime     String                @map("new_start_time")
+  newEndTime       String                @map("new_end_time")
+  reason           String?
+  changedByUserId  String?               @map("changed_by_user_id")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  booking          Booking               @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  @@index([bookingId])
+  @@map("appointment_changes")
+}
+
+enum AppointmentChangeType {
+  RESCHEDULED
+}
+
 model Reminder {
   id            String              @id @default(cuid())
   bookingId     String              @map("booking_id")
@@ -235,12 +258,16 @@ model Reminder {
   intervalKey   String              @map("interval_key")
   scheduledFor  DateTime            @map("scheduled_for")
   status        ReminderStatus      @default(PENDING)
+  attemptCount  Int                 @default(0) @map("attempt_count")
+  lastAttemptAt DateTime?           @map("last_attempt_at")
+  nextAttemptAt DateTime?           @map("next_attempt_at")
   sentAt        DateTime?           @map("sent_at")
   failureReason String?             @map("failure_reason")
   createdAt     DateTime            @default(now()) @map("created_at")
   updatedAt     DateTime            @updatedAt @map("updated_at")
   booking       Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   @@index([status, scheduledFor])
+  @@index([status, nextAttemptAt])
   @@index([bookingId])
   @@map("reminders")
 }
@@ -251,6 +278,7 @@ enum ReminderStatus {
   SENT
   FAILED
   CANCELLED
+  RETRY_PENDING
 }
 
 enum NotificationChannel {
