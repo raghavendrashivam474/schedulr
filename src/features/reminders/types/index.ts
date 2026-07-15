@@ -19,12 +19,14 @@ export interface Reminder {
   updatedAt: Date
 }
 
+// Reminder Policy Types
 export interface ReminderPolicy {
   reminder24h: boolean
   reminder2h: boolean
   reminder30m: boolean
 }
 
+// Interval Definition
 export interface ReminderIntervalDefinition {
   key: ReminderInterval
   minutesBefore: number
@@ -37,12 +39,14 @@ export const REMINDER_INTERVALS: ReminderIntervalDefinition[] = [
   { key: 'REMINDER_30M', minutesBefore: 30, label: '30 minutes before' },
 ]
 
+// Planning Types
 export interface PlannedReminder {
   intervalKey: ReminderInterval
   scheduledFor: Date
   channel: NotificationChannel
 }
 
+// Dispatch Types
 export interface DispatchResult {
   success: boolean
   failureReason?: string
