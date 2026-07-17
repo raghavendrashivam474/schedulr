@@ -5,7 +5,7 @@ const COOKIE_NAME = 'schedulr_session'
 const AUTH_ROUTES = ['/login', '/register']
 const PROTECTED_PREFIXES = [
   '/overview', '/business', '/settings', '/services',
-  '/availability', '/bookings', '/customers', '/dashboard',
+  '/availability', '/bookings', '/customers', '/dashboard', '/automation',
 ]
 
 export async function middleware(request: NextRequest) {
