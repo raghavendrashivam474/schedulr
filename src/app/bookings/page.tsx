@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '@components/dashboard/DashboardLayout'
 import Link from 'next/link'
-import type { BookingWithDetails } from '@appTypes/index'
+import type { BookingWithDetails, TimeSlot } from '@appTypes/index'
 
 const STATUS_COLORS: Record<string, string> = {
   CONFIRMED: 'bg-green-100 text-green-700',
@@ -33,6 +33,11 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<BookingWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('ALL')
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null)
+  const [rescheduleDate, setRescheduleDate] = useState('')
+  const [rescheduleSlots, setRescheduleSlots] = useState<TimeSlot[]>([])
+  const [rescheduleLoading, setRescheduleLoading] = useState(false)
+  const [rescheduleError, setRescheduleError] = useState('')
 
   const fetchBookings = useCallback(async () => {
     setLoading(true)
@@ -65,6 +70,44 @@ export default function BookingsPage() {
     } else {
       alert(data.error)
     }
+  }
+
+  async function openReschedule(bookingId: string) {
+    setReschedulingId(bookingId)
+    setRescheduleDate('')
+    setRescheduleSlots([])
+    setRescheduleError('')
+  }
+
+  async function loadRescheduleSlots(bookingId: string, date: string) {
+    setRescheduleLoading(true)
+    setRescheduleError('')
+    try {
+      const res = await fetch('/api/bookings/' + bookingId + '/reschedule-slots?date=' + date)
+      const data = await res.json()
+      if (data.success) setRescheduleSlots(data.data.slots)
+    } finally {
+      setRescheduleLoading(false)
+    }
+  }
+
+  async function confirmReschedule(bookingId: string, startTime: string) {
+    setRescheduleError('')
+    const res = await fetch('/api/bookings/' + bookingId + '/reschedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        newAppointmentDate: rescheduleDate,
+        newStartTime: startTime,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      setRescheduleError(data.error ?? 'Failed to reschedule')
+      return
+    }
+    setReschedulingId(null)
+    void fetchBookings()
   }
 
   return (
@@ -118,6 +161,12 @@ export default function BookingsPage() {
                   )}
                 </div>
                 <div className="ml-4 flex flex-col gap-1">
+                  {(booking.status === 'CONFIRMED' || booking.status === 'CHECKED_IN') && (
+                    <button onClick={() => openReschedule(booking.id)}
+                      className="text-xs font-medium px-2 py-1 rounded text-purple-600 hover:text-purple-800">
+                      Reschedule
+                    </button>
+                  )}
                   {(LIFECYCLE_ACTIONS[booking.status] ?? []).map((action) => (
                     <button key={action.next}
                       onClick={() => handleTransition(booking.id, action.next)}
@@ -132,6 +181,38 @@ export default function BookingsPage() {
                   ))}
                 </div>
               </div>
+
+              {reschedulingId === booking.id && (
+                <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Reschedule Appointment</h3>
+                    <button onClick={() => setReschedulingId(null)} className="text-xs text-gray-500">Close</button>
+                  </div>
+                  <div className="space-y-3">
+                    <input type="date" value={rescheduleDate}
+                      onChange={(e) => {
+                        setRescheduleDate(e.target.value)
+                        if (e.target.value) void loadRescheduleSlots(booking.id, e.target.value)
+                      }}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                    {rescheduleLoading && <p className="text-xs text-gray-500">Loading slots...</p>}
+                    {rescheduleSlots.filter((s) => s.available).length > 0 && (
+                      <div className="grid grid-cols-4 gap-2">
+                        {rescheduleSlots.filter((s) => s.available).map((slot) => (
+                          <button key={slot.startTime} onClick={() => confirmReschedule(booking.id, slot.startTime)}
+                            className="rounded-md border border-purple-300 bg-white px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100">
+                            {slot.startTime}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {rescheduleDate && !rescheduleLoading && rescheduleSlots.filter((s) => s.available).length === 0 && (
+                      <p className="text-xs text-gray-500">No available slots on this date</p>
+                    )}
+                    {rescheduleError && <p className="text-xs text-red-600">{rescheduleError}</p>}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
