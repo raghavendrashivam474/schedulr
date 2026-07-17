@@ -29,10 +29,19 @@ export async function syncRemindersForBooking(bookingId: string): Promise<void> 
   })
 }
 
+// Cancels all active future reminder work for a booking.
+// Active work includes both PENDING (not yet due) and RETRY_PENDING (scheduled for retry).
+// Terminal statuses (SENT, FAILED, CANCELLED) are preserved as historical truth.
 export async function cancelPendingRemindersForBooking(bookingId: string): Promise<void> {
   await prisma.reminder.updateMany({
-    where: { bookingId, status: 'PENDING' },
-    data: { status: 'CANCELLED' },
+    where: {
+      bookingId,
+      status: { in: ['PENDING', 'RETRY_PENDING'] },
+    },
+    data: {
+      status: 'CANCELLED',
+      nextAttemptAt: null,
+    },
   })
 }
 
