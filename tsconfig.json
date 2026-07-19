@@ -27,8 +27,17 @@
       "@/*": [
         "./src/*"
       ],
-      "@lib/*": [
-        "./lib/*"
+      "@lib/prisma": [
+        "./lib/prisma"
+      ],
+      "@lib/time": [
+        "./src/lib/time"
+      ],
+      "@lib/time/*": [
+        "./src/lib/time/*"
+      ],
+      "@lib/validators/*": [
+        "./src/lib/validators/*"
       ],
       "@appTypes/*": [
         "./src/types/*"
