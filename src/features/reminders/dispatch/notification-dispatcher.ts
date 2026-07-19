@@ -1,6 +1,13 @@
+// notification-dispatcher.ts
+// Dispatches reminders through the NotificationService abstraction.
+// This file no longer knows how notifications are delivered.
+// It only knows that a notification must be sent.
+
 import { prisma } from '@lib/prisma'
-import { sendEmail } from '@features/notifications/services/email.service'
 import { reminderEmailTemplate } from '@features/notifications/templates/reminder.templates'
+import { NotificationService } from '@platform/notification/notification.service'
+import { ProviderRegistry } from '@platform/notification/registry/provider-registry'
+import { EmailProvider } from '@platform/notification/providers/email/email.provider'
 import type { DispatchResult } from '../types'
 
 function intervalLabel(intervalKey: string): string {
@@ -8,6 +15,12 @@ function intervalLabel(intervalKey: string): string {
   if (intervalKey === 'REMINDER_2H') return 'in 2 hours'
   if (intervalKey === 'REMINDER_30M') return 'in 30 minutes'
   return 'soon'
+}
+
+function buildNotificationService(): NotificationService {
+  const registry = new ProviderRegistry()
+  registry.register(new EmailProvider())
+  return new NotificationService(registry)
 }
 
 export async function dispatchReminder(reminderId: string): Promise<DispatchResult> {
@@ -29,10 +42,6 @@ export async function dispatchReminder(reminderId: string): Promise<DispatchResu
     return { success: false, failureReason: 'Booking is no longer active' }
   }
 
-  if (reminder.channel !== 'EMAIL') {
-    return { success: false, failureReason: 'Unsupported channel: ' + reminder.channel }
-  }
-
   const dateFormatted = new Date(booking.appointmentDate).toLocaleDateString('en-GB', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
@@ -48,15 +57,21 @@ export async function dispatchReminder(reminderId: string): Promise<DispatchResu
     businessPhone: booking.business.contactPhone,
   })
 
-  const sent = await sendEmail({
-    to: booking.customerEmail,
+  const service = buildNotificationService()
+
+  const result = await service.send({
+    channel: reminder.channel as 'EMAIL',
+    recipient: booking.customerEmail,
     subject: template.subject,
-    html: template.html,
-    text: template.text,
+    body: template.html,
+    metadata: { text: template.text },
   })
 
-  if (!sent) {
-    return { success: false, failureReason: 'Email provider did not confirm delivery' }
+  if (!result.success) {
+    return {
+      success: false,
+      failureReason: result.failureReason ?? 'Notification service did not confirm delivery',
+    }
   }
 
   return { success: true }
