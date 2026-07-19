@@ -4,6 +4,7 @@ import type {
   ReminderInterval,
 } from '../types'
 import { REMINDER_INTERVALS } from '../types'
+import { combineBusinessDateTimeToUTC, nowUTC } from '@lib/time'
 
 function isIntervalEnabled(policy: ReminderPolicy, key: ReminderInterval): boolean {
   if (key === 'REMINDER_24H') return policy.reminder24h
@@ -12,6 +13,8 @@ function isIntervalEnabled(policy: ReminderPolicy, key: ReminderInterval): boole
   return false
 }
 
+// Timezone-aware planner.
+// Computes reminder scheduledFor as UTC based on the business timezone.
 export function planReminders(
   appointmentDateTime: Date,
   policy: ReminderPolicy,
@@ -38,9 +41,26 @@ export function planReminders(
   return planned
 }
 
+// Legacy helper - server local time combination.
+// Kept for backwards compatibility with code that predates timezone support.
 export function combineAppointmentDateTime(appointmentDate: Date, startTime: string): Date {
   const [hours, minutes] = startTime.split(':').map(Number)
   const combined = new Date(appointmentDate)
   combined.setHours(hours, minutes, 0, 0)
   return combined
+}
+
+// Timezone-aware combination.
+// Prefer this for all new code paths.
+export function combineAppointmentDateTimeUTC(
+  appointmentDate: Date,
+  startTime: string,
+  businessTimezone: string
+): Date {
+  const dateStr = appointmentDate.toISOString().split('T')[0]
+  return combineBusinessDateTimeToUTC(dateStr, startTime, businessTimezone)
+}
+
+export function currentUTC(): Date {
+  return nowUTC()
 }

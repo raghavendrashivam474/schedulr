@@ -1,18 +1,20 @@
 import { prisma } from '@lib/prisma'
-import { planReminders, combineAppointmentDateTime } from '../engines/reminder-planning.engine'
+import { planReminders, combineAppointmentDateTimeUTC } from '../engines/reminder-planning.engine'
 import { getReminderPolicy } from './reminder-policy.service'
 
 export async function syncRemindersForBooking(bookingId: string): Promise<void> {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
+    include: { business: true },
   })
   if (!booking) return
   if (booking.status !== 'CONFIRMED') return
 
   const policy = await getReminderPolicy(booking.businessId)
-  const appointmentDateTime = combineAppointmentDateTime(
+  const appointmentDateTime = combineAppointmentDateTimeUTC(
     booking.appointmentDate,
-    booking.startTime
+    booking.startTime,
+    booking.business.timeZone
   )
   const planned = planReminders(appointmentDateTime, policy)
 
