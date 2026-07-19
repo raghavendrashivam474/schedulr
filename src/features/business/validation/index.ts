@@ -1,9 +1,10 @@
+import { timezoneSchema } from '@lib/validators/timezone.validator'
 import { z } from 'zod'
 
 export const createBusinessSchema = z.object({
   name: z.string().min(2).max(100).trim(),
   type: z.string().min(2).max(50).trim(),
-  timeZone: z.string().min(1, 'Time zone is required'),
+  timeZone: timezoneSchema,
   contactEmail: z.string().email().toLowerCase().trim(),
   contactPhone: z.string().max(20).optional(),
   address: z.string().max(200).optional(),
